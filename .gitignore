@@ -12,7 +12,8 @@
 
 # Ignore all JENKINS_HOME except jobs directory, root xml config, and
 # .gitignore file.
-/*
+./jenkins-docker-certs
+./jenkins-data
 !/jobs
 !/.gitignore
 !/*.xml

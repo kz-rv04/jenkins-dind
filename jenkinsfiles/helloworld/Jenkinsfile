@@ -1,0 +1,100 @@
+pipeline
+{
+	agent any
+	
+	triggers
+	{
+		// Run every day at 00:00.
+		cron( "0 0 * * *" )
+		// Triggered by a push to the BitBucket.
+		bitbucketPush()
+	}
+	
+	stages
+	{
+		stage( 'Create Container' )
+		{
+			steps
+			{
+				sh 'docker build -f /repo/Dockerfile.build_env -t build_env:v1 .'
+			}
+		}
+		
+		stage( 'Run Container' )
+		{
+			agent
+			{
+				docker
+				{
+					image 'build_env:v1'
+					args '-it'
+				}
+			}
+			
+			// From this stages, it will be processed within the Docker container.
+			stages
+			{
+				stage( 'Build' )
+				{
+					steps
+					{
+						// Clean all workspaces before build
+						cleanWs()
+						git( url: 'https://github.com/kz-rv04/jenkins-dind.git', branch: "${env.BRANCH_NAME}" )
+							
+						// build product and test programs
+						script
+						{
+							sh '''
+								/bin/bash -c \\
+								\'cd ./test && \\
+								make rebuild \'
+							'''
+						}
+					}
+				}
+				
+				stage( 'Execute' )
+				{
+					steps
+					{
+						script
+						{
+							sh './test/hello'
+						}
+					}
+				}
+			}
+		}
+	}
+
+	post
+	{
+		always
+		{
+			// process test evidence
+			// clean workspace
+				cleanWs( cleanWhenNotBuilt: false,
+						deleteDirs: true,
+						disableDeferredWipeout: true,
+						notFailBuild: true,
+						patterns: [[pattern: '.gitignore', type: 'INCLUDE'],
+								   [pattern: '.propsfile', type: 'EXCLUDE']] )
+		}
+		
+		success
+		{
+			echo 'Success.'
+		}
+		
+		failure
+		{
+			echo 'Failure.'
+		}
+		
+		aborted
+		{
+			echo 'Aborted.'
+		}
+	}
+}

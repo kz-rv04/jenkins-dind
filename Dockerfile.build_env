@@ -1,0 +1,15 @@
+# https://www.jenkins.io/doc/book/installing/docker/#on-windows
+FROM ubuntu:20.04
+
+# ENV https_proxy=
+# ENV http_proxy=
+# ENV ftp_proxy=
+# ENV no_proxy=
+# ENV TRUST_HOST=
+# ENV PROXY=
+
+USER root
+RUN apt-get update && apt-get install -y  lsb-release apt-transport-https \
+       ca-certificates curl gnupg2 \
+       software-properties-common
+RUN apt-get update && apt-get install -y make gcc ssh sshpass zip

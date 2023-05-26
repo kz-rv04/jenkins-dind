@@ -1,0 +1,54 @@
+version: '3.2'
+services:
+  docker:
+    image: docker:dind
+    privileged: true
+    networks:
+      - jenkins-network
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Tokyo
+      JAVA_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Tokyo
+      # JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dhttp.proxyHost=*.*.*.* -Dhttp.proxyPort=* -Dhttps.proxyHost=*.*.*.* -Dhttps.proxyPort=* -Dhttp.nonProxyHosts='127.0.0.1|localhost' -Duser.timezone=Asia/Tokyo
+      # JAVA_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dhttp.proxyHost=*.*.*.* -Dhttp.proxyPort=80 -Dhttps.proxyHost=*.*.*.* -Dhttps.proxyPort=* -Dhttp.nonProxyHosts='127.0.0.1|localhost -Duser.timezone=Asia/Tokyo
+      TZ: 'Asia/Tokyo'
+      TRUST_HOST: 'mirrors.tuna.tsinghua.edu.cn,updates.jenkins.io,mirrors.jenkins.io,ftp.yz.yamagata-u.ac.jp'
+    volumes:
+      - ./jenkins-docker-certs:/certs/client
+      - ./jenkins-data:/var/jenkins_home
+    expose:
+      - "2376"
+    ports:
+      - "2376:2376"
+      
+  jenkins-blueocean:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Tokyo
+        JAVA_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Tokyo
+        # JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dhttp.proxyHost=*.*.*.* -Dhttp.proxyPort=* -Dhttps.proxyHost=*.*.*.* -Dhttps.proxyPort=* -Dhttp.nonProxyHosts='127.0.0.1|localhost' -Duser.timezone=Asia/Tokyo
+        # JAVA_OPTIONS: -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dhttp.proxyHost=*.*.*.* -Dhttp.proxyPort=80 -Dhttps.proxyHost=*.*.*.* -Dhttps.proxyPort=* -Dhttp.nonProxyHosts='127.0.0.1|localhost -Duser.timezone=Asia/Tokyo
+        TZ: 'Asia/Tokyo'
+        TRUST_HOST: 'mirrors.tuna.tsinghua.edu.cn,updates.jenkins.io,mirrors.jenkins.io,ftp.yz.yamagata-u.ac.jp'
+    environment:
+      DOCKER_HOST: "tcp://docker:2376"
+      DOCKER_CERT_PATH: /certs/client
+      DOCKER_TLS_VERIFY: 1
+    networks:
+      - jenkins-network
+    expose:
+      - "8080"
+      - "50000"
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - ./jenkins-docker-certs:/certs/client:ro
+      - ./jenkins-data:/var/jenkins_home
+    tty: true
+
+networks:
+  jenkins-network:
+    driver: bridge
